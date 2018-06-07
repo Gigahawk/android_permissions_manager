@@ -1,12 +1,16 @@
 name: android_permissions_manager
 description: Plugin to manage permissions on android
 version: 0.0.1
-author:
-homepage:
+author: Gigahawk
+homepage: https://github.com/Gigahawk/android_permissions_manager
 
 dependencies:
   flutter:
     sdk: flutter
+
+environtment:
+  sdk: ">=1.19.0 <2.0.0"
+  flutter: ^0.1.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
@@ -47,3 +51,4 @@ flutter:
   #
   # For details regarding fonts in packages, see
   # https://flutter.io/custom-fonts/#from-packages
+
