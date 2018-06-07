@@ -8,11 +8,12 @@ class AndroidPermissionsManager {
   static const MethodChannel _channel =
       const MethodChannel('android_permissions_manager');
 
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
 
+  /// Requests a permission from the user.
+  ///
+  /// If the permission has previously been granted or denied (i.e. user has
+  /// requested that you stop requesting the permission) this function will
+  /// immediately return [PermissionResult.denied] or [PermissionResult.showRationale].
   static Future<PermissionResult> requestPermission(PermissionType permission) async {
     final int status = await _channel.invokeMethod('requestPermission', <String, dynamic>{
       'permission': describeEnum(permission)
@@ -22,6 +23,16 @@ class AndroidPermissionsManager {
     return PermissionResult.values[status];
   }
 
+  /// Requests a permission from the user.
+  ///
+  /// Permissions you can request can be found in [PermissionType].
+  ///
+  /// For example:
+  /// ```dart
+  /// PermisionResult result = requestPermissionString(describeEnum(PermissionType.READ_CALENDAR));
+  /// ```
+  ///
+  /// For more information see [requestPermission()]
   static Future<PermissionResult> requestPermissionString(String permission) async {
     final int status = await _channel.invokeMethod('requestPermission', <String, dynamic>{
       'permission': permission
@@ -31,6 +42,7 @@ class AndroidPermissionsManager {
     return PermissionResult.values[status];
   }
 
+  /// Checks if a permission has been previously granted.
   static Future<PermissionResult> checkPermission(PermissionType permission) async {
     final int status = await _channel.invokeMethod('requestPermission', <String, dynamic>{
       'permission': describeEnum(permission)
@@ -40,6 +52,13 @@ class AndroidPermissionsManager {
     return PermissionResult.values[status];
   }
 
+  /// Checks if a permission has been previously granted.
+  /// Permissions you can check can be found in [PermissionType].
+  ///
+  /// For example:
+  /// ```dart
+  /// PermisionResult result = checkPermissionString(describeEnum(PermissionType.READ_CALENDAR));
+  /// ```
   static Future<PermissionResult> checkPermissionString(String permission) async {
     final int status = await _channel.invokeMethod('checkPermission', <String, dynamic>{
       'permission': permission
@@ -49,6 +68,9 @@ class AndroidPermissionsManager {
     return PermissionResult.values[status];
   }
 
+  /// Opens the app settings for your app.
+  ///
+  /// Instantly returns true.
   static Future<bool> openSettings() async {
     final bool isOpen = await _channel.invokeMethod("openSettings");
 
@@ -57,11 +79,15 @@ class AndroidPermissionsManager {
 }
 
 enum PermissionResult {
+  /// Permission granted, you may use the requested resource.
   granted,
+  /// Permission denied, you should stop requesting the resource.
   denied,
+  /// Permission denied, you should tell the user why you need the resource.
   showRationale,
 }
 
+/// Supported permissions, for more info visit [here](https://developer.android.com/reference/android/Manifest.permission)
 enum PermissionType {
   READ_CALENDAR,
   WRITE_CALENDAR,
