@@ -15,12 +15,25 @@ class AndroidPermissionsManager {
   /// requested that you stop requesting the permission) this function will
   /// immediately return [PermissionResult.denied] or [PermissionResult.showRationale].
   static Future<PermissionResult> requestPermission(PermissionType permission) async {
-    final int status = await _channel.invokeMethod('requestPermission', <String, dynamic>{
+    final List<int> statuses = await _channel.invokeMethod('requestPermission', <String, dynamic>{
       'permission': describeEnum(permission)
     });
+    final int status = statuses[0];
     debugPrint(status.toString());
 
     return PermissionResult.values[status];
+  }
+
+  /// Requests a list of permissions from the user.
+  ///
+  /// For more information see [requestPermission()]
+  static Future<List<PermissionResult>> requestPermissions(List<PermissionType> permissions) async {
+    final List<int> statuses = await _channel.invokeMethod('requestPermissions', <String, dynamic>{
+      'permissions': permissions.map((PermissionType type) => describeEnum(type)).toList(),
+    });
+    debugPrint(statuses.toString());
+
+    return statuses.map((int status) => PermissionResult.values[status]).toList();
   }
 
   /// Requests a permission from the user.
@@ -34,22 +47,48 @@ class AndroidPermissionsManager {
   ///
   /// For more information see [requestPermission()]
   static Future<PermissionResult> requestPermissionString(String permission) async {
-    final int status = await _channel.invokeMethod('requestPermission', <String, dynamic>{
+    final List<int> statuses = await _channel.invokeMethod('requestPermission', <String, dynamic>{
       'permission': permission
     });
+    final int status = statuses[0];
     debugPrint(status.toString());
 
     return PermissionResult.values[status];
   }
 
+  /// Requests a list of permissions from the user.
+  ///
+  /// For more information see [requestPermissionString()]
+  static Future<List<PermissionResult>> requestPermissionsString(List<String> permissions) async {
+    final List<int> statuses = await _channel.invokeMethod('requestPermissions', <String, dynamic>{
+      'permissions': permissions,
+    });
+    debugPrint(statuses.toString());
+
+    return statuses.map((int status) => PermissionResult.values[status]).toList();
+  }
+
   /// Checks if a permission has been previously granted.
   static Future<PermissionResult> checkPermission(PermissionType permission) async {
-    final int status = await _channel.invokeMethod('requestPermission', <String, dynamic>{
+    final List<int> statuses = await _channel.invokeMethod('checkPermission', <String, dynamic>{
       'permission': describeEnum(permission)
     });
+    final int status = statuses[0];
     debugPrint(status.toString());
 
     return PermissionResult.values[status];
+  }
+
+  /// Checks if a list of permissions have been previously granted.
+  ///
+  /// For more information see [checkPermission()]
+  static Future<List<PermissionResult>> checkPermissions(List<PermissionType> permissions) async {
+    final List<int> statuses = await _channel.invokeMethod('checkPermissions', <String, dynamic>{
+      'permissions': permissions.map((PermissionType type) => describeEnum(type)).toList(),
+    });
+    debugPrint(statuses.toString());
+
+    return statuses.map((int status) => PermissionResult.values[status]).toList();
   }
 
   /// Checks if a permission has been previously granted.
@@ -60,12 +99,25 @@ class AndroidPermissionsManager {
   /// PermisionResult result = checkPermissionString(describeEnum(PermissionType.READ_CALENDAR));
   /// ```
   static Future<PermissionResult> checkPermissionString(String permission) async {
-    final int status = await _channel.invokeMethod('checkPermission', <String, dynamic>{
+    final List<int> statuses = await _channel.invokeMethod('checkPermission', <String, dynamic>{
       'permission': permission
     });
+    final int status = statuses[0];
     debugPrint(status.toString());
 
     return PermissionResult.values[status];
+  }
+
+  /// Checks if a list of permissions have been previously granted.
+  ///
+  /// For more information see [checkPermissions()]
+  static Future<List<PermissionResult>> checkPermissionsString(List<PermissionType> permissions) async {
+    final List<int> statuses = await _channel.invokeMethod('checkPermissions', <String, dynamic>{
+      'permissions': permissions,
+    });
+    debugPrint(statuses.toString());
+
+    return statuses.map((int status) => PermissionResult.values[status]).toList();
   }
 
   /// Opens the app settings for your app.

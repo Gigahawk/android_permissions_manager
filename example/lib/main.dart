@@ -56,6 +56,16 @@ class _MyAppState extends State<MyApp> {
                 bool result = await AndroidPermissionsManager.openSettings();
                 debugPrint(result.toString());
               }
+            ),
+            IconButton(
+              icon: Icon(Icons.sms),
+              onPressed: () async {
+                List<PermissionResult> results = await AndroidPermissionsManager.requestPermissions(<PermissionType>[
+                  PermissionType.SEND_SMS,
+                  PermissionType.READ_SMS,
+                ]);
+                debugPrint(results.toString());
+              },
             )
           ],
         ),

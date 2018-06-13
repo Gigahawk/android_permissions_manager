@@ -10,6 +10,10 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
@@ -29,8 +33,10 @@ public class AndroidPermissionsManagerPlugin implements MethodCallHandler, Plugi
   private Result result;
 
   private static final int GET_PERMISSION_REQUEST_ID = 9001;
+  private static final int PERMISSION_GRANTED = 0;
+  private static final int PERMISSION_DENIED = 1;
+  private static final int PERMISSION_SHOW_RATIONALE = 2;
 
-  private boolean rationaleJustShown = false;
   /**
    * Plugin registration.
    */
@@ -49,36 +55,39 @@ public class AndroidPermissionsManagerPlugin implements MethodCallHandler, Plugi
   public void onMethodCall(MethodCall call, final Result result) {
     permissionCallback = new PermissionCallback() {
       @Override
-      public void granted() {
-        rationaleJustShown = false;
-        result.success(0);
-      }
+      public void result(int[] results) {
 
-      @Override
-      public void denied() {
-        rationaleJustShown = false;
-        result.success(1);
-      }
-
-      @Override
-      public void showRationale() {
-        rationaleJustShown = true;
-        result.success(2);
       }
     };
     String permission;
+    ArrayList<String> permissions;
     switch (call.method){
       case "getPlatformVersion":
         result.success("Android " + android.os.Build.VERSION.RELEASE);
         break;
       case "checkPermission":
         permission = call.argument("permission");
-        checkPermission(permission);
+        permissions = new ArrayList<String>();
+        permissions.add(permission);
+        checkPermissions(permissions);
         break;
+      case "checkPermissions":
+        permissions = new ArrayList<String>();
+        permissions = call.argument("permissions");
+        this.result = result;
+        checkPermissions(permissions);
       case "requestPermission":
         permission = call.argument("permission");
+        permissions = new ArrayList<String>();
+        permissions.add(permission);
         this.result = result;
-        requestPermission(permission);
+        requestPermissions(permissions);
+        break;
+      case "requestPermissions":
+        permissions = new ArrayList<String>();
+        permissions = call.argument("permissions");
+        this.result = result;
+        requestPermissions(permissions);
         break;
       case "openSettings":
         openSettings();
@@ -98,26 +107,36 @@ public class AndroidPermissionsManagerPlugin implements MethodCallHandler, Plugi
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     activity.startActivity(intent);
   }
-  private void requestPermission(String permission) {
+  private void requestPermissions(ArrayList<String> permissions) {
       Activity activity = registrar.activity();
-      permission = stringToPermission(permission);
-      Log.i("AndroidPermissionsMgr", "Requesting permission: " + permission);
-      String[] perm = {permission};
-      ActivityCompat.requestPermissions(activity, perm, GET_PERMISSION_REQUEST_ID);
+      List<String> perms = new ArrayList<String>();
+      perms = permissions.stream().map(perm -> stringToPermission(perm)).collect(Collectors.toList());
+
+      Log.i("AndroidPermissionsMgr", "Requesting permissions: " + perms.toString());
+      String[] permsToRequest = new String[perms.size()];
+      permsToRequest = perms.toArray(permsToRequest);
+      ActivityCompat.requestPermissions(activity, permsToRequest, GET_PERMISSION_REQUEST_ID);
   }
 
-  private void checkPermission(String permission) {
+  private int checkPermission(Activity activity, String perm){
+    boolean res = PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(activity, perm);
+    if(res)
+      return PERMISSION_GRANTED;
+    else
+      return PERMISSION_DENIED;
+  }
+
+
+  private void checkPermissions(ArrayList<String> permissions) {
     Activity activity = registrar.activity();
-    permission = stringToPermission(permission);
-    Log.i("AndroidPermissionsMgr", "Checking permission: " + permission);
-    boolean res = PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(activity, permission);
-    if(res) {
-      permissionCallback.granted();
-    } else if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
-      permissionCallback.showRationale();
-    } else {
-      permissionCallback.denied();
-    }
+    List<String> perms = new ArrayList<String>();
+    perms = permissions.stream().map(perm -> stringToPermission(perm)).collect(Collectors.toList());
+    Log.i("AndroidPermissionsMgr", "Checking permissions: " + perms.toString());
+    List<Integer> results = new ArrayList<Integer>();
+    results = perms.stream().map(perm -> checkPermission(activity, perm)).collect(Collectors.toList());
+    int[] res = new int[results.size()];
+    res = results.stream().mapToInt(i -> i).toArray();
+    permissionCallback.result(res);
   }
 
   @Override
@@ -126,26 +145,19 @@ public class AndroidPermissionsManagerPlugin implements MethodCallHandler, Plugi
     switch (requestCode) {
       case GET_PERMISSION_REQUEST_ID:
         // If request is cancelled, the result arrays are empty.
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-          permissionCallback.granted();
-          return true;
-        } else if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permissions[0])) {
-          permissionCallback.showRationale();
-          return false;
+        if (grantResults.length > 0) {
+            permissionCallback.result(grantResults);
+            return true;
         } else {
-          permissionCallback.denied();
           return false;
         }
     }
     return false;
   }
 
+
   public interface PermissionCallback {
-    void granted();
-
-    void denied();
-
-    void showRationale();
+      void result(int[] results);
   }
 
   private String stringToPermission(String perm) {
