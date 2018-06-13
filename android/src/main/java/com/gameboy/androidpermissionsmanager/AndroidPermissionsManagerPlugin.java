@@ -56,6 +56,7 @@ public class AndroidPermissionsManagerPlugin implements MethodCallHandler, Plugi
     permissionCallback = new PermissionCallback() {
       @Override
       public void result(int[] results) {
+        result.success(results);
 
       }
     };

@@ -1,6 +1,6 @@
 name: android_permissions_manager
 description: Plugin to manage permissions on android
-version: 0.0.3
+version: 0.0.4
 author: Gigahawk
 homepage: https://github.com/Gigahawk/android_permissions_manager
 
